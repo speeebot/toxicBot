@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 discordClient = discord.Client()
+
 client = discovery.build(
   "commentanalyzer",
   "v1alpha1",
@@ -39,10 +40,9 @@ async def on_message(message):
 
     response = client.comments().analyze(body=analyze_request).execute()
     print(response)
-    
+
     toxicityScore = math.floor(response['attributeScores']['TOXICITY']['spanScores'][0]['score']['value'] * 100)
-    print(toxicityScore) 
-    
+    print(toxicityScore)
 
     if toxicityScore in range(95, 100):
         await message.channel.send('TOXIC LEVEL 9000!')
@@ -54,4 +54,3 @@ async def on_message(message):
         await message.channel.send('Try again.')
 
 discordClient.run(os.getenv('TOKEN'))
-#discordClient.run('ODU3NTYzNDY1MDM5MDg1NjE4.YNRaNg.mYXUxQ3AzNHUOPZa1b3EAvbawso')
