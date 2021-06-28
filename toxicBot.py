@@ -13,7 +13,8 @@ load_dotenv()
 
 conn_username = os.getenv('CONN_USERNAME')
 conn_password = os.getenv('CONN_PASSWORD')
-conn_string = f"mongodb+srv://{conn_username}:{conn_password}@toxicbot.cgrie.mongodb.net/toxic_database?retryWrites=true"
+conn_string = (f"mongodb+srv://{conn_username}:{conn_password}@toxicbot.cgrie.mongodb.net/"
+              f"toxic_database?retryWrites=true")
 
 client = MongoClient(conn_string)
 db = client.toxic_database
