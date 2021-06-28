@@ -3,9 +3,21 @@ import json
 import math
 import os
 from googleapiclient import discovery
+import pymongo
+from pymongo import MongoClient
+from pymongo import ReturnDocument
 from dotenv import load_dotenv
 
+import db_imports
 load_dotenv()
+
+conn_username = os.getenv('CONN_USERNAME')
+conn_password = os.getenv('CONN_PASSWORD')
+conn_string = f"mongodb+srv://{conn_username}:{conn_password}@toxicbot.cgrie.mongodb.net/toxic_database?retryWrites=true"
+
+client = MongoClient(conn_string)
+db = client.toxic_database
+usersToxicity = db.usersToxicity #collection of users' toxicity levels
 
 discordClient = discord.Client()
 
@@ -17,8 +29,6 @@ client = discovery.build(
   static_discovery=False,
 )
 
-toxicityAvg = messageCount = 0
-
 @discordClient.event
 async def on_ready():
     print('We have logged in as {0.user}'.format(discordClient))
@@ -28,11 +38,16 @@ async def on_message(message):
     if message.author == discordClient.user:
         return
 
-    if message.content.startswith('$toxicscore'):
-        await message.channel.send('Your toxicity score is ')
+    toxicityAvg = messageCount = toxicScore = 0
+    toxicScore = db.usersToxicity.find_one({'user': message.author.id})
+    try:
+        if message.content.startswith('$toxicscore'):
+            await message.channel.send(f"You have sent {toxicScore['messageCount']} messages with a toxicity score of {round(toxicScore['toxicityAvg'], 2)}")
+            return
+    except:
+        await message.channel.send('You need to chat before you can have a toxicity score')
+        return
 
-    global toxicityAvg, toxicityScore
-   # await message.channel.send(message.content)
     analyze_request = {
       'comment': { 'text': message.content},
       'requestedAttributes': {'TOXICITY': {}}
@@ -41,16 +56,28 @@ async def on_message(message):
     response = client.comments().analyze(body=analyze_request).execute()
     print(response)
 
-    toxicityScore = math.floor(response['attributeScores']['TOXICITY']['spanScores'][0]['score']['value'] * 100)
-    print(toxicityScore)
+    perspective_response = response['attributeScores']['TOXICITY']['spanScores'][0]['score']['value']
 
-    if toxicityScore in range(95, 100):
-        await message.channel.send('TOXIC LEVEL 9000!')
-    elif toxicityScore in range(90, 95):
-        await message.channel.send('That was pretty toxic.')
-    elif toxicityScore in range(80, 90):
-        await message.channel.send('Not bad.')
-    elif toxicityScore in range(70, 80):
-        await message.channel.send('Try again.')
+    toxicityScore = perspective_response * 100
+
+    print(message.author.display_name + ' said: "' + message.content + '\" and it had a toxicity score of: ' + str(toxicityScore))
+
+    curToxicity = db.usersToxicity.find_one_and_update(
+        {'user': message.author.id},
+        {'$inc': {'messageCount': 1,
+                  'toxicSum': toxicityScore}},
+        upsert = True,
+        return_document = ReturnDocument.AFTER)
+
+    messageCount = curToxicity['messageCount']
+    toxicSum = curToxicity['toxicSum']
+
+    toxicityAvg = toxicSum / messageCount
+
+    #update userToxicity in db with new toxicityAvg
+    db.usersToxicity.find_one_and_update(
+        {'user': message.author.id},
+        {'$set': {'toxicityAvg': toxicityAvg}},
+        upsert = True)
 
 discordClient.run(os.getenv('TOKEN'))
