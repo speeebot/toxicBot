@@ -22,11 +22,11 @@ usersToxicity = db.usersToxicity #collection of users' toxicity levels
 discordClient = discord.Client()
 
 perspective_client = discovery.build(
-  "commentanalyzer",
-  "v1alpha1",
-  developerKey=os.getenv('API_KEY'),
-  discoveryServiceUrl="https://commentanalyzer.googleapis.com/$discovery/rest?version=v1alpha1",
-  static_discovery=False,
+    "commentanalyzer",
+    "v1alpha1",
+    developerKey=os.getenv('API_KEY'),
+    discoveryServiceUrl="https://commentanalyzer.googleapis.com/$discovery/rest?version=v1alpha1",
+    static_discovery=False,
 )
 
 @discordClient.event
