@@ -21,7 +21,7 @@ usersToxicity = db.usersToxicity #collection of users' toxicity levels
 
 discordClient = discord.Client()
 
-client = discovery.build(
+perspective_client = discovery.build(
   "commentanalyzer",
   "v1alpha1",
   developerKey=os.getenv('API_KEY'),
@@ -53,7 +53,7 @@ async def on_message(message):
       'requestedAttributes': {'TOXICITY': {}}
     }
 
-    response = client.comments().analyze(body=analyze_request).execute()
+    response = perspective_client.comments().analyze(body=analyze_request).execute()
     print(response)
 
     perspective_response = response['attributeScores']['TOXICITY']['spanScores'][0]['score']['value']
