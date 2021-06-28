@@ -39,10 +39,13 @@ async def on_message(message):
         return
 
     toxicityAvg = messageCount = toxicScore = 0
+
     toxicScore = db.usersToxicity.find_one({'user': message.author.id})
+
     try:
         if message.content.startswith('$toxicscore'):
-            await message.channel.send(f"You have sent {toxicScore['messageCount']} messages with a toxicity score of {round(toxicScore['toxicityAvg'], 2)}")
+            await message.channel.send(f"You have sent {toxicScore['messageCount']} messages with a "
+                                       f"toxicity score of {round(toxicScore['toxicityAvg'], 2)}")
             return
     except:
         await message.channel.send('You need to chat before you can have a toxicity score')
@@ -54,13 +57,15 @@ async def on_message(message):
     }
 
     response = perspective_client.comments().analyze(body=analyze_request).execute()
+
     print(response)
 
     perspective_response = response['attributeScores']['TOXICITY']['spanScores'][0]['score']['value']
 
     toxicityScore = perspective_response * 100
 
-    print(message.author.display_name + ' said: "' + message.content + '\" and it had a toxicity score of: ' + str(toxicityScore))
+    print(f"{message.author.display_name} said: {message.content}\" and it had a toxicity score of: "
+          f"{toxicityScore}")
 
     curToxicity = db.usersToxicity.find_one_and_update(
         {'user': message.author.id},
