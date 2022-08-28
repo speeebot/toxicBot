@@ -1,6 +1,7 @@
 import discord
 import json
 import math
+import urllib
 import os
 from googleapiclient import discovery
 import pymongo
@@ -13,8 +14,9 @@ load_dotenv()
 
 conn_username = os.getenv('CONN_USERNAME')
 conn_password = os.getenv('CONN_PASSWORD')
-conn_string = (f"mongodb+srv://{conn_username}:{conn_password}@toxicbot.cgrie.mongodb.net/"
-              f"toxic_database?retryWrites=true")
+mongo_cluster = os.getenv('MONGO_CLUSTER')
+conn_string = (f"mongodb+srv://{conn_username}:" + urllib.parse.quote(conn_password) 
+                + f"{mongo_cluster}")
 
 client = MongoClient(conn_string)
 db = client.toxic_database
